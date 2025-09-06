@@ -1,0 +1,91 @@
+version: "3.9"
+
+services:
+  opensearch:
+    image: opensearchproject/opensearch:2.11.0
+    environment:
+      - discovery.type=single-node
+      - plugins.security.disabled=true
+      - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200 >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - opensearch:/usr/share/opensearch/data
+
+  db:
+    image: mysql:8.0
+    command: ["--default-authentication-plugin=mysql_native_password", "--innodb-buffer-pool-size=512M", "--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    volumes:
+      - db:/var/lib/mysql
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    volumes:
+      - redis:/data
+
+  php:
+    image: markoshust/magento-php:8.1-fpm-2.3.1
+    depends_on:
+      db:
+        condition: service_healthy
+      opensearch:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      PHP_MEMORY_LIMIT: 2G
+      COMPOSER_MEMORY_LIMIT: -1
+      MAGENTO_ROOT: /var/www/html
+    volumes:
+      - ./src:/var/www/html
+      - ./tools:/var/www/html/tools:ro
+      - composer:/var/www/.composer
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  nginx:
+    image: markoshust/magento-nginx:1.25-0
+    depends_on:
+      php:
+        condition: service_started
+    ports:
+      - "80:8080"
+    environment:
+      WEB_ROOT: /var/www/html/pub
+    volumes:
+      - ./src:/var/www/html:delegated
+
+volumes:
+  db:
+  redis:
+  composer:
+  opensearch:
