@@ -68,6 +68,7 @@ services:
     volumes:
       - ./src:/var/www/html
       - ./tools:/var/www/html/tools:ro
+      - ./addons:/var/www/addons:ro
       - composer:/var/www/.composer
     extra_hosts:
       - "host.docker.internal:host-gateway"
