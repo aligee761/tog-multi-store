@@ -1,9 +1,9 @@
 # TOG Multi-Store Magento 2.4.8 (Docker)
 
-This repository contains a Dockerized Magento 2.4.8 Open Source setup prepared for a GCC multi-store (UAE, KSA, Oman, Kuwait, Qatar). It uses PHP 8.1, MySQL 8, Redis, and OpenSearch 2.x.
+This repository contains a Dockerized Magento 2.4.8 Open Source setup prepared for a GCC multi-store (UAE, KSA, Oman, Kuwait). It uses PHP 8.1, MySQL 8, Redis, and OpenSearch 2.x.
 
 Features
-- Multi-store scaffold for UAE, KSA, Oman, Kuwait, Qatar
+- Multi-store scaffold for UAE, KSA, Oman, Kuwait
 - Docker Compose for local development on Windows
 - Redis for cache/session, OpenSearch for search
 - PowerShell scripts to install Magento and create stores
@@ -23,10 +23,15 @@ Quick Start
    ```powershell
    ./scripts/magento-install.ps1
    ```
-4. Create GCC stores (UAE, KSA, Oman, Kuwait, Qatar):
+4. Create GCC stores (UAE, KSA, Oman, Kuwait):
    ```powershell
    ./scripts/create-stores.ps1
    ```
+   This creates websites for UAE, KSA, Oman, and Kuwait, sets base/default currencies (AED, SAR, OMR, KWD), enables store codes in URLs, and updates base URLs. Access paths:
+   - http://localhost/uae/
+   - http://localhost/ksa/
+   - http://localhost/oman/
+   - http://localhost/kuwait/
 5. Access the site at: http://localhost/
 
 Environment Variables

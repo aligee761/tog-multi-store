@@ -58,16 +58,9 @@ $websites = [
         'locale' => 'en_US',
         'base_path' => 'kuwait/'
     ],
-    [
-        'code' => 'qatar',
-        'name' => 'Qatar',
-        'currency' => 'QAR',
-        'locale' => 'en_US',
-        'base_path' => 'qatar/'
-    ],
 ];
 
-$allowedCurrencies = 'AED,SAR,OMR,KWD,QAR';
+$allowedCurrencies = 'AED,SAR,OMR,KWD';
 
 /** Create or update websites, store groups and views */
 foreach ($websites as $w) {
