@@ -83,6 +83,7 @@ services:
       WEB_ROOT: /var/www/html/pub
     volumes:
       - ./src:/var/www/html:delegated
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
 
 volumes:
   db:

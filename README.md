@@ -1,9 +1,11 @@
 # TOG Multi-Store Magento 2.4.8 (Docker)
 
-This repository contains a Dockerized Magento 2.4.8 Open Source setup prepared for a GCC multi-store (UAE, KSA, Oman, Kuwait). It uses PHP 8.1, MySQL 8, Redis, and OpenSearch 2.x.
+This repository contains a Dockerized Magento 2.4.8 Open Source setup prepared for a GCC multi-store (UAE, KSA, Oman, Kuwait), each with two languages (English and Arabic). It uses PHP 8.1, MySQL 8, Redis, and OpenSearch 2.x.
 
 Features
 - Multi-store scaffold for UAE, KSA, Oman, Kuwait
+- Two store views per country: `en` and `ar`
+- SEO-friendly subdomains + language paths, e.g. `uae.localhost/en/` and `uae.localhost/ar/`
 - Docker Compose for local development on Windows
 - Redis for cache/session, OpenSearch for search
 - PowerShell scripts to install Magento and create stores
@@ -19,20 +21,32 @@ Quick Start
    ```powershell
    docker compose up -d
    ```
-3. Install Magento (requires Adobe Marketplace auth keys):
+3. Add hosts file entries (Windows) for local subdomains:
+   Edit `C:\Windows\System32\drivers\etc\hosts` as Administrator and add:
+   ```
+   127.0.0.1   uae.localhost
+   127.0.0.1   ksa.localhost
+   127.0.0.1   oman.localhost
+   127.0.0.1   kuwait.localhost
+   ```
+4. Install Magento (requires Adobe Marketplace auth keys):
    ```powershell
    ./scripts/magento-install.ps1
    ```
-4. Create GCC stores (UAE, KSA, Oman, Kuwait):
+5. Create GCC stores and language views (UAE, KSA, Oman, Kuwait with EN+AR):
    ```powershell
    ./scripts/create-stores.ps1
    ```
-   This creates websites for UAE, KSA, Oman, and Kuwait, sets base/default currencies (AED, SAR, OMR, KWD), enables store codes in URLs, and updates base URLs. Access paths:
-   - http://localhost/uae/
-   - http://localhost/ksa/
-   - http://localhost/oman/
-   - http://localhost/kuwait/
-5. Access the site at: http://localhost/
+   This creates websites for UAE, KSA, Oman, and Kuwait, sets base/default currencies (AED, SAR, OMR, KWD), and two store views per country with locales `en_US` and the appropriate Arabic locale. Base URLs use subdomains; Nginx maps `/en` and `/ar` prefixes to the corresponding Magento store views. Access paths:
+   - http://uae.localhost/en/
+   - http://uae.localhost/ar/
+   - http://ksa.localhost/en/
+   - http://ksa.localhost/ar/
+   - http://oman.localhost/en/
+   - http://oman.localhost/ar/
+   - http://kuwait.localhost/en/
+   - http://kuwait.localhost/ar/
+6. Access the default site root: http://uae.localhost/
 
 Environment Variables
 - See `.env` for database, base URL, and credentials.
@@ -55,5 +69,5 @@ Git & GitHub
 
 Notes
 - Magento files will be installed into `src/` by Composer.
-- If you prefer per-store subdomains locally (e.g., `uae.localhost`), update Nginx and `hosts` accordingly.
-- For Arabic (RTL) support, add Arabic language packs and enable per store view.
+- Subdomains + language paths are preconfigured in `nginx/default.conf`. Ensure your hosts file contains the entries above.
+- For Arabic (RTL) support in the UI, install Arabic language packs and ensure your theme supports RTL.

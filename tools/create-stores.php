@@ -34,29 +34,41 @@ $websites = [
         'code' => 'uae',
         'name' => 'UAE',
         'currency' => 'AED',
-        'locale' => 'en_US',
-        'base_path' => 'uae/'
+        'host' => 'uae.localhost',
+        'locales' => [
+            'en' => 'en_US',
+            'ar' => 'ar_SA'
+        ]
     ],
     [
         'code' => 'ksa',
         'name' => 'KSA',
         'currency' => 'SAR',
-        'locale' => 'en_US',
-        'base_path' => 'ksa/'
+        'host' => 'ksa.localhost',
+        'locales' => [
+            'en' => 'en_US',
+            'ar' => 'ar_SA'
+        ]
     ],
     [
         'code' => 'oman',
         'name' => 'Oman',
         'currency' => 'OMR',
-        'locale' => 'en_US',
-        'base_path' => 'oman/'
+        'host' => 'oman.localhost',
+        'locales' => [
+            'en' => 'en_US',
+            'ar' => 'ar_SA'
+        ]
     ],
     [
         'code' => 'kuwait',
         'name' => 'Kuwait',
         'currency' => 'KWD',
-        'locale' => 'en_US',
-        'base_path' => 'kuwait/'
+        'host' => 'kuwait.localhost',
+        'locales' => [
+            'en' => 'en_US',
+            'ar' => 'ar_SA'
+        ]
     ],
 ];
 
@@ -96,25 +108,42 @@ foreach ($websites as $w) {
         echo "Group {$groupCode} exists\n";
     }
 
-    // Store View
-    $storeCode = $w['code'] . '_en';
-    $store = null;
-    try {
-        $store = $storeManager->getStore($storeCode);
-    } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
+    // Store Views: en and ar (codes must be globally unique)
+    $enStoreId = null;
+    foreach (['en','ar'] as $lang) {
+        $storeCode = $w['code'] . '_' . $lang;
         $store = null;
+        try {
+            $store = $storeManager->getStore($storeCode);
+        } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
+            $store = null;
+        }
+        if (!$store || !$store->getId()) {
+            $store = $storeFactory->create();
+            $store->setCode($storeCode);
+            $store->setName($w['name'] . ' ' . strtoupper($lang));
+            $store->setWebsiteId((int)$website->getId());
+            $store->setGroupId((int)$group->getId());
+            $store->setIsActive(true);
+            $store->save();
+            echo "Store view {$storeCode} created\n";
+        } else {
+            echo "Store view {$storeCode} exists\n";
+        }
+
+        // Set locale per store view
+        $resourceConfig->saveConfig('general/locale/code', $w['locales'][$lang], 'stores', (int)$store->getId());
+
+        if ($lang === 'en') {
+            $enStoreId = (int)$store->getId();
+        }
     }
-    if (!$store || !$store->getId()) {
-        $store = $storeFactory->create();
-        $store->setCode($storeCode);
-        $store->setName($w['name'] . ' English');
-        $store->setWebsiteId((int)$website->getId());
-        $store->setGroupId((int)$group->getId());
-        $store->setIsActive(true);
-        $store->save();
-        echo "Store view {$storeCode} created\n";
-    } else {
-        echo "Store view {$storeCode} exists\n";
+
+    // Set default store view of the group to English
+    if ($enStoreId && (int)$group->getDefaultStoreId() !== $enStoreId) {
+        $group->setDefaultStoreId($enStoreId);
+        $groupRepo->save($group);
+        echo "Default store view for {$groupCode} set to EN\n";
     }
 
     // Set default group for website if not set
@@ -131,17 +160,16 @@ foreach ($websites as $w) {
     $resourceConfig->saveConfig('currency/options/base', $w['currency'], $scope, $scopeId);
     $resourceConfig->saveConfig('currency/options/default', $w['currency'], $scope, $scopeId);
     $resourceConfig->saveConfig('currency/options/allow', $allowedCurrencies, $scope, $scopeId);
-    $resourceConfig->saveConfig('general/locale/code', $w['locale'], $scope, $scopeId);
 
-    // Base URLs: use path-based per website
-    $baseUrl = rtrim(getenv('BASE_URL') ?: 'http://localhost/', '/') . '/' . $w['base_path'];
-    $baseUrlSecure = rtrim(getenv('BASE_URL_SECURE') ?: 'https://localhost/', '/') . '/' . $w['base_path'];
+    // Base URLs: per-website using subdomains, language segment handled via Nginx rewrites
+    $baseUrl = 'http://' . $w['host'] . '/';
+    $baseUrlSecure = 'https://' . $w['host'] . '/';
     $resourceConfig->saveConfig('web/unsecure/base_url', $baseUrl, $scope, $scopeId);
     $resourceConfig->saveConfig('web/secure/base_url', $baseUrlSecure, $scope, $scopeId);
 }
 
-// Global config: use store code in URLs & rewrites
-$resourceConfig->saveConfig('web/url/use_store', 1, 'default', 0);
+// Global config: do NOT use store code in URLs; SEO rewrites ON
+$resourceConfig->saveConfig('web/url/use_store', 0, 'default', 0);
 $resourceConfig->saveConfig('web/seo/use_rewrites', 1, 'default', 0);
 
 // Flush config cache programmatically

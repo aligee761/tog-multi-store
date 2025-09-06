@@ -1,5 +1,6 @@
 param(
-    [switch]$WithSampleData
+    [switch]$WithSampleData,
+    [switch]$WithArabic
 )
 
 $ErrorActionPreference = "Stop"
@@ -105,6 +106,21 @@ if ($WithSampleData) {
         "cd /var/www/html && php -d memory_limit=-1 bin/magento sampledata:deploy && php -d memory_limit=-1 bin/magento setup:upgrade"
     )
     docker compose exec php @sampleCmd
+}
+
+# Optional: Arabic language pack and static content
+if ($WithArabic) {
+    Write-Host "Installing Arabic (ar_SA) language pack and deploying static content..." -ForegroundColor Cyan
+    $langInstall = @(
+        'bash','-lc',
+        @"
+cd /var/www/html && \
+composer require magento2translations/language_ar_sa:* --no-interaction && \
+php -d memory_limit=-1 bin/magento setup:upgrade && \
+php -d memory_limit=-1 bin/magento setup:static-content:deploy -f en_US ar_SA
+"@
+    )
+    docker compose exec php @langInstall
 }
 
 # Dev mode and indexers

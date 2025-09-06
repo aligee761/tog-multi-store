@@ -25,7 +25,7 @@ if (-not $baseUrl) { $baseUrl = 'http://localhost/' }
 if (-not $baseUrlSecure) { $baseUrlSecure = 'https://localhost/' }
 
 # Run the store creation script using container's PHP
-Write-Host "Creating GCC stores (UAE, KSA, Oman, Kuwait)..." -ForegroundColor Cyan
+Write-Host "Creating GCC stores (UAE, KSA, Oman, Kuwait) with EN/AR views..." -ForegroundColor Cyan
 $runScript = @(
   'bash','-lc',
   "php -d memory_limit=-1 /var/www/html/tools/create-stores.php"
